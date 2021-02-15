@@ -1,0 +1,4 @@
+SQLAlchemy
+mysqlclient
+ddt
+google-cloud-bigquery
