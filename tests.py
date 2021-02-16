@@ -1,7 +1,7 @@
 import unittest
 from ddt import ddt, idata, unpack
-from mysql2bq import convert_column, convert_schema
-from sqlalchemy.dialects.mysql import TINYINT, TIMESTAMP, INTEGER
+from mysql2bq import convert_column, convert_schema, generate_select_statement
+from sqlalchemy.dialects.mysql import TINYINT, TIMESTAMP, INTEGER, VARCHAR
 # for failure test
 from sqlalchemy.dialects.postgresql import INET
 
@@ -57,6 +57,30 @@ class TestMySqlToBq(unittest.TestCase):
                   'autoincrement': True}
         with self.assertRaises(ValueError) as context:
             convert_column(column)
+
+    def test_generate_select_statement(self):
+        schema = [
+            {'name': 'id', 'type': INTEGER(), 'mode': 'NULLABLE'},
+            {'name': 'post_id', 'type': INTEGER(), 'mode': 'NULLABLE'},
+            {'name': 'username', 'type': VARCHAR(), 'mode': 'NULLABLE'},
+            {'name': 'first_name', 'type': VARCHAR(), 'mode': 'NULLABLE'},
+            {'name': 'email', 'type': VARCHAR(), 'mode': 'NULLABLE'},
+            {'name': 'created_at', 'type': TIMESTAMP(), 'mode': 'NULLABLE'},
+            {'name': 'updated_at', 'type': TIMESTAMP(), 'mode': 'NULLABLE'}
+        ]
+        salt = 'testsalt'
+        table = 'testtable'
+        sensitive_fields = ['email']
+
+        self.assertEqual(
+            f'SELECT id, post_id, username, first_name, SHA2(email,{salt}), '
+            f'UNIX_TIMESTAMP(created_at), UNIX_TIMESTAMP(updated_at) FROM {table}',
+            generate_select_statement(table, schema, salt, sensitive_fields))
+
+        self.assertEqual(
+            f'SELECT id, post_id, SHA2(username,{salt}), SHA2(first_name,{salt}), SHA2(email,{salt}), '
+            f'UNIX_TIMESTAMP(created_at), UNIX_TIMESTAMP(updated_at) FROM {table}',
+            generate_select_statement(table, schema, salt))
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ import argparse
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import reflection
-from mysql2bq import convert_schema
+from mysql2bq import convert_schema, generate_select_statement
 from bq import BqClient
 
 if __name__ == '__main__':
@@ -19,6 +19,7 @@ if __name__ == '__main__':
                              'e.g. \'mysql+mysqldb://user:password@127.0.0.1/database\'')
     parser.add_argument('--project', required=True, help='GCP project ID')
     parser.add_argument('--dataset', required=True, help='BQ dataset')
+    parser.add_argument('--salt', required=True, help='Salt applied to sensitive data hashing')
     parser.add_argument('--dry_run', dest='dry_run', action='store_true')
 
     args = parser.parse_args()
@@ -35,5 +36,5 @@ if __name__ == '__main__':
 
         bq.create_table('{}.{}.{}'.format(args.project, args.dataset, table), bq_schema, args.dry_run)
 
-        # TODO: columns -> select statement
+        select_statement = generate_select_statement(table, schema, args.salt)
         # TODO: generate `gcloud dataflow` commands for data import

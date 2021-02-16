@@ -70,3 +70,32 @@ def __convert_type(mysql_type):
             return bq_type
 
     raise ValueError('{} is not a known type'.format(mysql_type))
+
+
+def generate_select_statement(table_name, table_schema, salt, sensitive_fields=None, ):
+    """
+    Return SQL select statement string applying UNIX_TIMESTAMP to TIMESTAMP fields and hash sensitive with salt
+    """
+
+    if sensitive_fields is None:
+        sensitive_fields = ['email', 'username', 'first_name', 'last_name']
+
+    schema = convert_schema(table_schema)
+
+    def prep_field(field):
+        f_name = field['name']
+        f_type = field['type']
+
+        if f_type == 'TIMESTAMP':
+            return f'UNIX_TIMESTAMP({f_name})'
+        if f_name in sensitive_fields:
+            return f'SHA2({f_name},{salt})'
+
+        return f_name
+
+    field_list = [prep_field(f) for f in schema]
+    fields = ', '.join(field_list)
+
+    statement = f'SELECT {fields} FROM {table_name}'
+
+    return statement
