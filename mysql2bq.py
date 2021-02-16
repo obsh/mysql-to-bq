@@ -80,6 +80,8 @@ def generate_select_statement(table_name, table_schema, salt, sensitive_fields=N
     if sensitive_fields is None:
         sensitive_fields = ['email', 'username', 'first_name', 'last_name']
 
+    schema = convert_schema(table_schema)
+
     def prep_field(field):
         f_name = field['name']
         f_type = field['type']
@@ -91,9 +93,9 @@ def generate_select_statement(table_name, table_schema, salt, sensitive_fields=N
 
         return f_name
 
-    field_list = [prep_field(f) for f in table_schema]
+    field_list = [prep_field(f) for f in schema]
     fields = ', '.join(field_list)
 
-    statement = f'SELECT {fields} FROM {table_name} WHERE id <= 200000000'
+    statement = f'SELECT {fields} FROM {table_name}'
 
     return statement

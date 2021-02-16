@@ -36,5 +36,5 @@ if __name__ == '__main__':
 
         bq.create_table('{}.{}.{}'.format(args.project, args.dataset, table), bq_schema, args.dry_run)
 
-        select_statement = generate_select_statement(table, bq_schema, args.salt)
+        select_statement = generate_select_statement(table, schema, args.salt)
         # TODO: generate `gcloud dataflow` commands for data import
